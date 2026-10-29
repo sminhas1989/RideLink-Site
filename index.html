@@ -87,38 +87,6 @@
   }
   .waitlist-status.success { color: #8cff00; }
   .waitlist-status.error { color: #ff6b6b; }
-
-  .store-badges {
-    display: flex;
-    gap: 10px;
-    margin-top: 32px;
-  }
-
-  @media (max-width: 480px) {
-    .store-badges { flex-direction: column; }
-  }
-
-  .store-btn {
-    flex: 1;
-    display: block;
-    text-decoration: none;
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-  }
-
-  .store-btn.ios {
-    background: #f5f6f8;
-    color: #0a0a0a;
-  }
-
-  .store-btn.android {
-    background: transparent;
-    border: 1px solid #2a2a2a;
-    color: #f5f6f8;
-  }
 </style>
 </head>
 <body>
@@ -131,11 +99,6 @@
       <button type="submit" id="waitlistButton">Get Early Access</button>
     </form>
     <div class="waitlist-status" id="waitlistStatus"></div>
-
-    <div class="store-badges">
-      <a class="store-btn ios" href="https://apps.apple.com/app/id6825378676">Download on the App Store</a>
-      <a class="store-btn android" href="https://play.google.com/store/apps/details?id=com.sminhas89.RideLink">Get it on Google Play</a>
-    </div>
   </div>
 
   <script>
