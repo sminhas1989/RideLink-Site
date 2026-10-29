@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RideLink — Never ride alone.</title>
+<meta name="description" content="RideLink is the all-in-one motorcycle app — live rider tracking, group rides, crash detection, and more. Launching January 4, 2027." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink-900: #0a0a0a;
+    --ink-800: #151515;
+    --ink-700: #202020;
+    --ink-600: #2a2a2a;
+    --text: #f5f6f8;
+    --text-secondary: #8a8f99;
+    --lime: #8cff00;
+    --blue: #2f8fff;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--ink-900);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+  }
+
+  .display {
+    font-family: 'Rajdhani', -apple-system, sans-serif;
+    font-weight: 700;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(10,10,10,0.75);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--ink-700);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .nav-logo { height: 28px; width: auto; display: block; }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: var(--lime);
+    color: var(--ink-900);
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 720px) {
+    .nav-links a:not(.nav-cta) { display: none; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    padding: 80px 0 60px;
+    overflow: hidden;
+  }
+
+  canvas#roadCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.5;
+    z-index: 0;
+  }
+
+  .hero-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 20%, rgba(140,255,0,0.07) 0%, transparent 45%), radial-gradient(ellipse at 80% 60%, transparent 0%, var(--ink-900) 70%);
+    z-index: 1;
+  }
+
+  .hero-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  @media (max-width: 920px) {
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-phones { justify-content: center; }
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--lime);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 0 0 18px;
+  }
+
+  .eyebrow .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--lime);
+    box-shadow: 0 0 8px var(--lime);
+  }
+
+  h1 {
+    margin: 0 0 18px;
+    font-size: clamp(38px, 5.2vw, 68px);
+    line-height: 1.03;
+    letter-spacing: 0.005em;
+    text-wrap: balance;
+  }
+
+  h1 .accent {
+    color: var(--lime);
+    text-shadow: 0 0 36px rgba(140,255,0,0.3);
+  }
+
+  .hero-tagline {
+    max-width: 480px;
+    color: var(--text-secondary);
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0 0 32px;
+  }
+
+  @media (max-width: 920px) {
+    .hero-tagline { margin-left: auto; margin-right: auto; }
+  }
+
+  /* ---------- Waitlist form ---------- */
+  .waitlist {
+    display: flex;
+    gap: 10px;
+    max-width: 440px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 920px) {
+    .waitlist { margin-left: auto; margin-right: auto; }
+  }
+
+  @media (max-width: 480px) {
+    .waitlist { flex-direction: column; }
+  }
+
+  .waitlist input {
+    flex: 1;
+    background: var(--ink-800);
+    border: 1px solid var(--ink-600);
+    border-radius: 999px;
+    padding: 14px 20px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+  }
+
+  .waitlist input::placeholder { color: var(--text-secondary); }
+  .waitlist input:focus { border-color: var(--lime); }
+
+  .waitlist button {
+    background: var(--lime);
+    color: var(--ink-900);
+    border: none;
+    border-radius: 999px;
+    padding: 14px 26px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .waitlist button:disabled { opacity: 0.6; cursor: default; }
+
+  .waitlist-status {
+    min-height: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 36px;
+  }
+
+  .waitlist-status.success { color: var(--lime); }
+  .waitlist-status.error { color: #ff6b6b; }
+
+  .store-badges {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 920px) {
+    .store-badges { justify-content: center; }
+  }
+
+  .store-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--ink-600);
+    background: var(--ink-800);
+  }
+
+  .store-badge .glyph { font-size: 22px; line-height: 1; }
+
+  .store-badge .label-stack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .store-badge .small { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .store-badge .big { font-size: 14px; font-weight: 700; }
+
+  /* ---------- Phone mockups ---------- */
+  .hero-phones {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px 0;
+  }
+
+  .phone {
+    width: 230px;
+    border-radius: 34px;
+    background: linear-gradient(160deg, #1a1a1a, #000);
+    padding: 10px;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8);
+  }
+
+  .phone.secondary {
+    position: absolute;
+    left: -70px;
+    bottom: -30px;
+    width: 190px;
+    transform: rotate(-6deg);
+    z-index: -1;
+    opacity: 0.92;
+  }
+
+  .phone-screen {
+    position: relative;
+    height: 460px;
+    border-radius: 24px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(44,74,44,0.5), transparent 40%),
+      radial-gradient(circle at 70% 60%, rgba(30,30,60,0.4), transparent 45%),
+      #111418;
+  }
+
+  .phone.secondary .phone-screen { height: 380px; }
+
+  .phone-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(0deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .phone-status {
+    position: absolute;
+    top: 8px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    z-index: 5;
+  }
+
+  .phone-riders {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+
+  .rider-dot {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ink-700);
+    border: 2px solid var(--lime);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+  }
+
+  .rider-dot.self {
+    border-color: var(--blue);
+    background: var(--blue);
+    width: 16px;
+    height: 16px;
+    box-shadow: 0 0 0 6px rgba(47,143,255,0.25);
+  }
+
+  .phone-hud {
+    position: absolute;
+    top: 34px;
+    left: 10px;
+    right: 10px;
+    border-radius: 14px;
+    background: #1c1f24;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    z-index: 5;
+    box-shadow: 0 8px 20px -8px rgba(0,0,0,0.6);
+  }
+
+  .hud-tile { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .hud-tile.center { flex: 1.3; }
+  .hud-divider { width: 1px; align-self: stretch; background: var(--ink-600); margin: 2px 4px; }
+  .hud-value { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px; color: var(--lime); }
+  .hud-value.big { font-size: 19px; }
+  .hud-label { font-size: 7px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; }
+
+  .phone-nav-card {
+    position: absolute;
+    top: 30px;
+    left: 10px;
+    right: 10px;
+    border-radius: 14px;
+    background: #1c1f24;
+    padding: 12px;
+    z-index: 5;
+  }
+
+  .phone-nav-dist { color: var(--lime); font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .phone-nav-instr { color: var(--text); font-size: 14px; font-weight: 600; }
+
+  .phone-route-line {
+    position: absolute;
+    z-index: 2;
+    stroke: var(--lime);
+    stroke-width: 4;
+    fill: none;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 4px rgba(140,255,0,0.5));
+  }
+
+  .phone-navbar {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    height: 42px;
+    border-radius: 14px;
+    background: #16181c;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 5;
+  }
+
+  .phone-navbar .nav-icon { width: 16px; height: 16px; border-radius: 4px; background: var(--ink-600); }
+  .phone-navbar .nav-icon.active { background: var(--lime); }
+
+  /* ---------- Sections ---------- */
+  section { position: relative; z-index: 2; padding: 90px 0; }
+
+  .section-eyebrow {
+    color: var(--lime);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+    text-align: center;
+  }
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: clamp(28px, 4vw, 42px);
+    text-align: center;
+  }
+
+  .section-sub {
+    max-width: 560px;
+    margin: 0 auto 56px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 920px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .feature-grid { grid-template-columns: 1fr; } }
+
+  .feature-card {
+    background: var(--ink-800);
+    border: 1px solid var(--ink-700);
+    border-radius: 18px;
+    padding: 24px 20px;
+  }
+
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: rgba(140,255,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    margin-bottom: 16px;
+  }
+
+  .feature-card h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  .feature-card p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+
+  /* ---------- Countdown ---------- */
+  .countdown-section {
+    text-align: center;
+    background: linear-gradient(180deg, transparent, rgba(140,255,0,0.03), transparent);
+  }
+
+  .countdown {
+    display: flex;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 24px);
+    margin: 0 0 20px;
+  }
+
+  .countdown-unit { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; }
+  .countdown-value { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: clamp(36px, 7vw, 60px); line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .countdown-unit:first-child .countdown-value { color: var(--lime); text-shadow: 0 0 24px rgba(140,255,0,0.35); }
+  .countdown-sep { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: clamp(28px, 5vw, 44px); color: var(--ink-600); align-self: flex-start; margin-top: 4px; }
+  .countdown-label { color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+  .launch-date { color: var(--text-secondary); font-size: 14px; }
+  .launch-date b { color: var(--text); }
+
+  .launched-banner { display: none; flex-direction: column; align-items: center; gap: 8px; }
+  .launched-banner .big { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: clamp(32px, 6vw, 48px); color: var(--lime); }
+
+  /* ---------- Footer ---------- */
+  footer {
+    border-top: 1px solid var(--ink-700);
+    padding: 36px 0;
+    text-align: center;
+    color: var(--ink-600);
+    font-size: 12px;
+  }
+
+  footer a { color: var(--text-secondary); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  @media (prefers-reduced-motion: reduce) {
+    canvas#roadCanvas { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <img class="nav-logo" src="https://pzlchlsioqetkaebynoo.supabase.co/storage/v1/object/public/public-assets/wordmark.png" alt="RideLink" />
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#launch">Launch</a>
+      <a href="#join" class="nav-cta">Join Early</a>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <canvas id="roadCanvas"></canvas>
+  <div class="hero-vignette"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <p class="eyebrow"><span class="dot"></span>Launching Soon</p>
+      <h1 class="display">Never ride <span class="accent">alone</span> again.</h1>
+      <p class="hero-tagline">
+        RideLink is the all-in-one motorcycle app — see when your friends are riding, share your live location
+        safely, plan group rides, and stay connected on every ride.
+      </p>
+
+      <form class="waitlist" id="waitlistForm">
+        <input type="email" id="waitlistEmail" placeholder="Enter your email for early access" required autocomplete="email" />
+        <button type="submit" id="waitlistButton">Join Early</button>
+      </form>
+      <div class="waitlist-status" id="waitlistStatus"></div>
+
+      <div class="store-badges">
+        <div class="store-badge">
+          <span class="glyph">🍎</span>
+          <span class="label-stack"><span class="small">Coming Soon on</span><span class="big">App Store</span></span>
+        </div>
+        <div class="store-badge">
+          <span class="glyph">▶</span>
+          <span class="label-stack"><span class="small">Coming Soon on</span><span class="big">Google Play</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-phones">
+      <div class="phone secondary">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●</span></div>
+          <svg class="phone-route-line" viewBox="0 0 190 380" width="190" height="380">
+            <path d="M 40 340 L 60 260 L 50 180 L 100 120 L 90 50" />
+          </svg>
+          <div class="phone-nav-card">
+            <div class="phone-nav-dist">0.4 mi</div>
+            <div class="phone-nav-instr">Turn right onto Main St</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="phone-hud">
+            <div class="hud-tile"><div class="hud-value">18.4</div><div class="hud-label">Miles</div></div>
+            <div class="hud-divider"></div>
+            <div class="hud-tile"><div class="hud-value">32:08</div><div class="hud-label">Duration</div></div>
+            <div class="hud-divider"></div>
+            <div class="hud-tile center"><div class="hud-value big">47</div><div class="hud-label">MPH</div></div>
+            <div class="hud-divider"></div>
+            <div class="hud-tile"><div class="hud-value">68</div><div class="hud-label">Top Speed</div></div>
+            <div class="hud-divider"></div>
+            <div class="hud-tile"><div class="hud-value">22</div><div class="hud-label">Lean °</div></div>
+          </div>
+          <div class="phone-riders">
+            <div class="rider-dot" style="top: 38%; left: 62%;">🏍</div>
+            <div class="rider-dot" style="top: 58%; left: 28%;">🏍</div>
+            <div class="rider-dot self" style="top: 68%; left: 50%;"></div>
+          </div>
+          <div class="phone-navbar">
+            <div class="nav-icon active"></div>
+            <div class="nav-icon"></div>
+            <div class="nav-icon"></div>
+            <div class="nav-icon"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <p class="section-eyebrow">What's Inside</p>
+    <h2 class="display">The all-in-one motorcycle app</h2>
+    <p class="section-sub">Everything built around the ride itself — not another social feed.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <h3>Live Rider Map</h3>
+        <p>See nearby riders, friends, and live traffic in real time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧭</div>
+        <h3>Navigation &amp; Routes</h3>
+        <p>Plan routes, turn-by-turn navigation, and save your favorite rides.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <h3>Group Rides &amp; Crews</h3>
+        <p>Ride together with live member tracking, group chat, and crews.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Events</h3>
+        <p>Discover local meetups or create your own.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Rider Safety</h3>
+        <p>Crash detection, SOS, hazard reporting, and group safety alerts.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Ride Analytics</h3>
+        <p>Track your rides, stats, lean angle, and relive your journey.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏍️</div>
+        <h3>Profile &amp; Garage</h3>
+        <p>Showcase your bikes, track your stats, and connect with riders.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👻</div>
+        <h3>Privacy First</h3>
+        <p>Ghost Mode and Ghost Zone keep your location private whenever you want.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="launch" class="countdown-section">
+  <div class="wrap">
+    <p class="section-eyebrow">Launch Countdown</p>
+    <h2 class="display">The wait is almost over</h2>
+
+    <div class="countdown" id="countdown">
+      <div class="countdown-unit"><span class="countdown-value" id="cdDays">—</span><span class="countdown-label">Days</span></div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-unit"><span class="countdown-value" id="cdHours">—</span><span class="countdown-label">Hours</span></div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-unit"><span class="countdown-value" id="cdMinutes">—</span><span class="countdown-label">Min</span></div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-unit"><span class="countdown-value" id="cdSeconds">—</span><span class="countdown-label">Sec</span></div>
+    </div>
+
+    <div class="launched-banner" id="launchedBanner">
+      <span class="big">We're live.</span>
+      <span style="color: var(--text-secondary); font-size: 15px;">RideLink is available now.</span>
+    </div>
+
+    <p class="launch-date">Official launch <b>January 4, 2027</b></p>
+  </div>
+</section>
+
+<section id="join">
+  <div class="wrap" style="text-align:center;">
+    <p class="section-eyebrow">Be First</p>
+    <h2 class="display">Get early access</h2>
+    <p class="section-sub">Join the waitlist and we'll let you know the moment RideLink is ready to ride.</p>
+    <form class="waitlist" id="waitlistForm2" style="margin: 0 auto 14px;">
+      <input type="email" id="waitlistEmail2" placeholder="Enter your email for early access" required autocomplete="email" />
+      <button type="submit" id="waitlistButton2">Join Early</button>
+    </form>
+    <div class="waitlist-status" id="waitlistStatus2"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    &copy; <span id="year"></span> RideLink &middot; <a href="https://sminhas1989.github.io/ridelink-legal/privacy.html">Privacy</a> &middot; <a href="https://sminhas1989.github.io/ridelink-legal/terms.html">Terms</a>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ---------- Waitlist (writes to Supabase, public anon key — insert-only, see supabase/migrations/20261023160000_waitlist_signups.sql) ----------
+  const SUPABASE_URL = 'https://pzlchlsioqetkaebynoo.supabase.co';
+  const ANON_KEY = 'sb_publishable_jM9S9mIfIkSYYx5sJSXNDQ_-4TX8Hgh';
+
+  async function joinWaitlist(email, statusEl, buttonEl) {
+    buttonEl.disabled = true;
+    statusEl.className = 'waitlist-status';
+    statusEl.textContent = 'Joining…';
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/waitlist_signups`, {
+        method: 'POST',
+        headers: {
+          apikey: ANON_KEY,
+          Authorization: `Bearer ${ANON_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      if (response.status === 201) {
+        statusEl.className = 'waitlist-status success';
+        statusEl.textContent = "You're on the list! We'll email you when RideLink launches.";
+        return true;
+      }
+      if (response.status === 409) {
+        statusEl.className = 'waitlist-status success';
+        statusEl.textContent = "You're already on the list — we'll be in touch.";
+        return true;
+      }
+      statusEl.className = 'waitlist-status error';
+      statusEl.textContent = 'Please enter a valid email address.';
+      return false;
+    } catch (error) {
+      statusEl.className = 'waitlist-status error';
+      statusEl.textContent = 'Something went wrong. Please try again.';
+      return false;
+    } finally {
+      buttonEl.disabled = false;
+    }
+  }
+
+  function wireForm(formId, emailId, statusId, buttonId) {
+    const form = document.getElementById(formId);
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const emailEl = document.getElementById(emailId);
+      const statusEl = document.getElementById(statusId);
+      const buttonEl = document.getElementById(buttonId);
+      const ok = await joinWaitlist(emailEl.value, statusEl, buttonEl);
+      if (ok) emailEl.value = '';
+    });
+  }
+  wireForm('waitlistForm', 'waitlistEmail', 'waitlistStatus', 'waitlistButton');
+  wireForm('waitlistForm2', 'waitlistEmail2', 'waitlistStatus2', 'waitlistButton2');
+
+  // ---------- Countdown ----------
+  const LAUNCH_DATE = new Date(2027, 0, 4, 0, 0, 0);
+  const countdownEl = document.getElementById('countdown');
+  const launchedBannerEl = document.getElementById('launchedBanner');
+  const cdDays = document.getElementById('cdDays');
+  const cdHours = document.getElementById('cdHours');
+  const cdMinutes = document.getElementById('cdMinutes');
+  const cdSeconds = document.getElementById('cdSeconds');
+
+  function tickCountdown() {
+    const remainingMs = LAUNCH_DATE.getTime() - Date.now();
+    if (remainingMs <= 0) {
+      countdownEl.style.display = 'none';
+      launchedBannerEl.style.display = 'flex';
+      return;
+    }
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    cdDays.textContent = Math.floor(totalSeconds / 86400).toLocaleString();
+    cdHours.textContent = String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0');
+    cdMinutes.textContent = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    cdSeconds.textContent = String(totalSeconds % 60).padStart(2, '0');
+  }
+  tickCountdown();
+  setInterval(tickCountdown, 1000);
+
+  // ---------- Ambient road-line background ----------
+  (function animateRoad() {
+    const canvas = document.getElementById('roadCanvas');
+    if (!canvas || getComputedStyle(canvas).display === 'none') return;
+    const ctx = canvas.getContext('2d');
+    let width, height, dpr;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = canvas.offsetWidth;
+      height = canvas.offsetHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const lineSpacing = 90;
+    let offset = 0;
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = 'rgba(140, 255, 0, 0.05)';
+      ctx.lineWidth = 1.5;
+      const diag = width + height;
+      for (let x = -diag + (offset % lineSpacing); x < diag; x += lineSpacing) {
+        ctx.beginPath();
+        ctx.moveTo(x, height);
+        ctx.lineTo(x + height, 0);
+        ctx.stroke();
+      }
+      offset += 0.3;
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+</script>
+
+</body>
+</html>

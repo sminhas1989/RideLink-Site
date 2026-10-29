@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RideLink</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink-900: #0a0a0a;
+    --ink-800: #151515;
+    --ink-700: #202020;
+    --ink-600: #2a2a2a;
+    --text: #f5f6f8;
+    --text-secondary: #8a8f99;
+    --lime: #8cff00;
+    --blue: #2f8fff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--ink-900);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .display {
+    font-family: 'Rajdhani', -apple-system, sans-serif;
+    font-weight: 700;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--ink-800);
+    border: 1px solid var(--ink-700);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+
+  .wordmark {
+    height: 24px;
+    width: auto;
+    display: block;
+    margin: 0 auto 24px;
+  }
+
+  .avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    background: var(--ink-600);
+    border: 2px solid var(--ink-700);
+    display: block;
+    object-fit: cover;
+  }
+
+  .avatar-fallback {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    background: var(--ink-600);
+    border: 2px solid var(--ink-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--text-secondary);
+  }
+
+  .name {
+    font-size: 22px;
+    margin: 0 0 2px;
+  }
+
+  .username {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 24px;
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .store-btn {
+    display: block;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .store-btn.ios {
+    background: var(--text);
+    color: var(--ink-900);
+  }
+
+  .store-btn.android {
+    background: transparent;
+    border: 1px solid var(--ink-600);
+    color: var(--text);
+  }
+
+  .state {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <img class="wordmark" src="images/wordmark.png" alt="RideLink" />
+    <p class="state" id="state">Loading profile…</p>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://pzlchlsioqetkaebynoo.supabase.co';
+    const ANON_KEY = 'sb_publishable_jM9S9mIfIkSYYx5sJSXNDQ_-4TX8Hgh';
+
+    const APP_STORE_URL = 'https://apps.apple.com/app/id6825378676';
+    const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.sminhas89.RideLink';
+
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value;
+      return div.innerHTML;
+    }
+
+    function renderUnavailable() {
+      document.getElementById('state').textContent = "This profile isn't available.";
+    }
+
+    function renderPreview(profile) {
+      const card = document.getElementById('card');
+      const displayName = profile.display_name || profile.username || 'A RideLink rider';
+      const avatar = profile.avatar_url
+        ? `<img class="avatar" src="${escapeHtml(profile.avatar_url)}" alt="${escapeHtml(displayName)}" />`
+        : `<div class="avatar-fallback">${escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
+
+      card.innerHTML = `
+        <img class="wordmark" src="images/wordmark.png" alt="RideLink" />
+        ${avatar}
+        <p class="name display">${escapeHtml(displayName)}</p>
+        ${profile.username ? `<p class="username">@${escapeHtml(profile.username)}</p>` : ''}
+        <p class="note">Get RideLink to view ${escapeHtml(displayName)}'s full profile, send a friend request, and ride together.</p>
+        <div class="buttons">
+          <a class="store-btn ios" href="${APP_STORE_URL}">Download on the App Store</a>
+          <a class="store-btn android" href="${PLAY_STORE_URL}">Get it on Google Play</a>
+        </div>
+      `;
+    }
+
+    async function load() {
+      const userId = new URLSearchParams(location.search).get('u');
+      if (!userId) {
+        renderUnavailable();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_public_profile_preview`, {
+          method: 'POST',
+          headers: {
+            apikey: ANON_KEY,
+            Authorization: `Bearer ${ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ target_user_id: userId }),
+        });
+
+        if (!response.ok) {
+          renderUnavailable();
+          return;
+        }
+
+        const rows = await response.json();
+        if (!Array.isArray(rows) || rows.length === 0) {
+          renderUnavailable();
+          return;
+        }
+
+        renderPreview(rows[0]);
+      } catch {
+        renderUnavailable();
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

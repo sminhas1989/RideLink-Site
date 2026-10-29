@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sminhas89.RideLink",
+      "sha256_cert_fingerprints": [
+        "TODO_FILL_IN_VIA_EAS_CREDENTIALS_ANDROID"
+      ]
+    }
+  }
+]

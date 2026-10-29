@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RideLink</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink-900: #0a0a0a;
+    --ink-800: #151515;
+    --ink-700: #202020;
+    --ink-600: #2a2a2a;
+    --text: #f5f6f8;
+    --text-secondary: #8a8f99;
+    --lime: #8cff00;
+    --blue: #2f8fff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--ink-900);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .display {
+    font-family: 'Rajdhani', -apple-system, sans-serif;
+    font-weight: 700;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--ink-800);
+    border: 1px solid var(--ink-700);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+
+  .wordmark {
+    height: 24px;
+    width: auto;
+    display: block;
+    margin: 0 auto 24px;
+  }
+
+  .cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    margin: 0 0 16px;
+    background: var(--ink-600);
+    border: 1px solid var(--ink-700);
+    display: block;
+    object-fit: cover;
+  }
+
+  .cover-fallback {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    margin: 0 0 16px;
+    background: var(--ink-600);
+    border: 1px solid var(--ink-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+
+  .title {
+    font-size: 21px;
+    margin: 0 0 4px;
+  }
+
+  .subtitle {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 0 0 2px;
+  }
+
+  .byline {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 24px;
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .store-btn {
+    display: block;
+    text-decoration: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .store-btn.ios {
+    background: var(--text);
+    color: var(--ink-900);
+  }
+
+  .store-btn.android {
+    background: transparent;
+    border: 1px solid var(--ink-600);
+    color: var(--text);
+  }
+
+  .state {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <img class="wordmark" src="images/wordmark.png" alt="RideLink" />
+    <p class="state" id="state">Loading…</p>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://pzlchlsioqetkaebynoo.supabase.co';
+    const ANON_KEY = 'sb_publishable_jM9S9mIfIkSYYx5sJSXNDQ_-4TX8Hgh';
+
+    const APP_STORE_URL = 'https://apps.apple.com/app/id6825378676';
+    const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.sminhas89.RideLink';
+
+    // One entry per shareable type — maps the `t` query param to its
+    // RPC, the RPC's id parameter name, and how to turn one result row
+    // into the card's fields. Keeps this single page from needing three
+    // near-duplicate HTML files (website/r.html stays separate — it
+    // predates this and has its own url shape already shipped).
+    const TYPE_CONFIG = {
+      event: {
+        rpc: 'get_public_event_preview',
+        idParam: 'target_event_id',
+        unavailable: "This event isn't available.",
+        note: (f) => `Get RideLink to view ${escapeHtml(f.title)}'s full details and RSVP.`,
+        cover: (f) => f.cover_photo_url,
+        title: (f) => f.title,
+        subtitle: (f) => [f.location_name, formatDate(f.scheduled_start)].filter(Boolean).join(' · '),
+        byline: (f) => (f.organizer_display_name ? `Hosted by ${f.organizer_display_name}` : ''),
+      },
+      group_ride: {
+        rpc: 'get_public_group_ride_preview',
+        idParam: 'target_group_ride_id',
+        unavailable: "This group ride isn't available.",
+        note: (f) => `Get RideLink to view ${escapeHtml(f.title)}'s full details and join.`,
+        cover: (f) => f.cover_photo_url,
+        title: (f) => f.title,
+        subtitle: (f) => [f.meeting_location_name, formatDate(f.scheduled_start)].filter(Boolean).join(' · '),
+        byline: (f) => {
+          const parts = [];
+          if (typeof f.accepted_member_count === 'number') parts.push(`${f.accepted_member_count} rider${f.accepted_member_count === 1 ? '' : 's'}`);
+          if (f.leader_display_name) parts.push(`Led by ${f.leader_display_name}`);
+          return parts.join(' · ');
+        },
+      },
+      crew: {
+        rpc: 'get_public_crew_preview',
+        idParam: 'target_crew_id',
+        unavailable: "This crew isn't available.",
+        note: (f) => `Get RideLink to view ${escapeHtml(f.name)}'s full profile and join.`,
+        cover: (f) => f.photo_url,
+        title: (f) => f.name,
+        subtitle: (f) => f.description || '',
+        byline: (f) => {
+          const parts = [];
+          if (typeof f.member_count === 'number') parts.push(`${f.member_count} member${f.member_count === 1 ? '' : 's'}`);
+          if (f.leader_display_name) parts.push(`Led by ${f.leader_display_name}`);
+          return parts.join(' · ');
+        },
+      },
+    };
+
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value;
+      return div.innerHTML;
+    }
+
+    function formatDate(isoString) {
+      if (!isoString) return '';
+      const date = new Date(isoString);
+      if (Number.isNaN(date.getTime())) return '';
+      return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function renderUnavailable(message) {
+      document.getElementById('state').textContent = message || "This isn't available.";
+    }
+
+    function renderPreview(config, fields) {
+      const card = document.getElementById('card');
+      const coverUrl = config.cover(fields);
+      const title = config.title(fields) || 'RideLink';
+      const cover = coverUrl
+        ? `<img class="cover" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(title)}" />`
+        : `<div class="cover-fallback">🏍️</div>`;
+      const subtitle = config.subtitle(fields);
+      const byline = config.byline(fields);
+
+      card.innerHTML = `
+        <img class="wordmark" src="images/wordmark.png" alt="RideLink" />
+        ${cover}
+        <p class="title display">${escapeHtml(title)}</p>
+        ${subtitle ? `<p class="subtitle">${escapeHtml(subtitle)}</p>` : ''}
+        ${byline ? `<p class="byline">${escapeHtml(byline)}</p>` : ''}
+        <p class="note">${config.note(fields)}</p>
+        <div class="buttons">
+          <a class="store-btn ios" href="${APP_STORE_URL}">Download on the App Store</a>
+          <a class="store-btn android" href="${PLAY_STORE_URL}">Get it on Google Play</a>
+        </div>
+      `;
+    }
+
+    async function load() {
+      const params = new URLSearchParams(location.search);
+      const type = params.get('t');
+      const id = params.get('id');
+      const config = TYPE_CONFIG[type];
+
+      if (!config || !id) {
+        renderUnavailable();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${config.rpc}`, {
+          method: 'POST',
+          headers: {
+            apikey: ANON_KEY,
+            Authorization: `Bearer ${ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ [config.idParam]: id }),
+        });
+
+        if (!response.ok) {
+          renderUnavailable(config.unavailable);
+          return;
+        }
+
+        const rows = await response.json();
+        if (!Array.isArray(rows) || rows.length === 0) {
+          renderUnavailable(config.unavailable);
+          return;
+        }
+
+        renderPreview(config, rows[0]);
+      } catch {
+        renderUnavailable(config.unavailable);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
