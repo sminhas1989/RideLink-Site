@@ -15,6 +15,7 @@
     margin: 0;
     min-height: 100vh;
     background: #0a0a0a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -23,6 +24,8 @@
 
   .wrap {
     text-align: center;
+    width: 100%;
+    max-width: 420px;
   }
 
   .wordmark {
@@ -34,20 +37,121 @@
   }
 
   .coming-soon {
-    font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Rajdhani', -apple-system, sans-serif;
     font-weight: 700;
     font-size: 22px;
     letter-spacing: 4px;
     text-transform: uppercase;
     color: #8cff00;
-    margin: 0;
+    margin: 0 0 32px;
   }
+
+  .waitlist {
+    display: flex;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    .waitlist { flex-direction: column; }
+  }
+
+  .waitlist input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: 1px solid #2a2a2a;
+    background: #151515;
+    color: #f5f6f8;
+    font-size: 14px;
+  }
+  .waitlist input::placeholder { color: #8a8f99; }
+  .waitlist input:focus { outline: none; border-color: #8cff00; }
+
+  .waitlist button {
+    padding: 13px 20px;
+    border-radius: 10px;
+    border: none;
+    background: #8cff00;
+    color: #0a0a0a;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .waitlist button:disabled { opacity: 0.6; cursor: default; }
+
+  .waitlist-status {
+    margin-top: 14px;
+    font-size: 13px;
+    min-height: 16px;
+  }
+  .waitlist-status.success { color: #8cff00; }
+  .waitlist-status.error { color: #ff6b6b; }
 </style>
 </head>
 <body>
   <div class="wrap">
     <img class="wordmark" src="images/wordmark.png" alt="RideLink" />
     <p class="coming-soon">Coming Soon</p>
+
+    <form class="waitlist" id="waitlistForm">
+      <input type="email" id="waitlistEmail" placeholder="Enter your email for early access" required autocomplete="email" />
+      <button type="submit" id="waitlistButton">Join Early</button>
+    </form>
+    <div class="waitlist-status" id="waitlistStatus"></div>
   </div>
+
+  <script>
+    // Writes to Supabase, public anon key — insert-only, see
+    // supabase/migrations/20261023160000_waitlist_signups.sql.
+    const SUPABASE_URL = 'https://pzlchlsioqetkaebynoo.supabase.co';
+    const ANON_KEY = 'sb_publishable_jM9S9mIfIkSYYx5sJSXNDQ_-4TX8Hgh';
+
+    async function joinWaitlist(email, statusEl, buttonEl) {
+      buttonEl.disabled = true;
+      statusEl.className = 'waitlist-status';
+      statusEl.textContent = 'Joining…';
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/waitlist_signups`, {
+          method: 'POST',
+          headers: {
+            apikey: ANON_KEY,
+            Authorization: `Bearer ${ANON_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        });
+        if (response.status === 201) {
+          statusEl.className = 'waitlist-status success';
+          statusEl.textContent = "You're on the list! We'll email you when RideLink launches.";
+          return true;
+        }
+        if (response.status === 409) {
+          statusEl.className = 'waitlist-status success';
+          statusEl.textContent = "You're already on the list — we'll be in touch.";
+          return true;
+        }
+        statusEl.className = 'waitlist-status error';
+        statusEl.textContent = 'Please enter a valid email address.';
+        return false;
+      } catch {
+        statusEl.className = 'waitlist-status error';
+        statusEl.textContent = 'Something went wrong. Please try again.';
+        return false;
+      } finally {
+        buttonEl.disabled = false;
+      }
+    }
+
+    document.getElementById('waitlistForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const emailEl = document.getElementById('waitlistEmail');
+      const statusEl = document.getElementById('waitlistStatus');
+      const buttonEl = document.getElementById('waitlistButton');
+      const ok = await joinWaitlist(emailEl.value, statusEl, buttonEl);
+      if (ok) emailEl.value = '';
+    });
+  </script>
 </body>
 </html>
