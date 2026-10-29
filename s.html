@@ -218,8 +218,13 @@
       const card = document.getElementById('card');
       const coverUrl = config.cover(fields);
       const title = config.title(fields) || 'RideLink';
+      // cover_photo_url is a private Storage path (signed-URL-only in
+      // the app) — it never resolves to a loadable image for an
+      // anonymous visitor here. Rendered anyway in case this ever
+      // changes to a real public URL; onerror below is what actually
+      // keeps today's broken-image icon from showing.
       const cover = coverUrl
-        ? `<img class="cover" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(title)}" />`
+        ? `<img class="cover" id="cover-img" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(title)}" />`
         : `<div class="cover-fallback">🏍️</div>`;
       const subtitle = config.subtitle(fields);
       const byline = config.byline(fields);
@@ -236,6 +241,16 @@
           <a class="store-btn android" href="${PLAY_STORE_URL}">Get it on Google Play</a>
         </div>
       `;
+
+      const coverImg = document.getElementById('cover-img');
+      if (coverImg) {
+        coverImg.addEventListener('error', () => {
+          const fallback = document.createElement('div');
+          fallback.className = 'cover-fallback';
+          fallback.textContent = '🏍️';
+          coverImg.replaceWith(fallback);
+        });
+      }
     }
 
     async function load() {

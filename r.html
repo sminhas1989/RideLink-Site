@@ -157,9 +157,16 @@
     function renderPreview(profile) {
       const card = document.getElementById('card');
       const displayName = profile.display_name || profile.username || 'A RideLink rider';
+      const initial = displayName.charAt(0).toUpperCase();
+      // avatar_url is a private Storage path (signed-URL-only in the app,
+      // see src/features/profiles/services.ts) — it never resolves to a
+      // loadable image for an anonymous visitor here. Rendered anyway
+      // (rather than always showing the fallback) in case this ever
+      // changes to a real public URL; onerror below is what actually
+      // keeps today's broken-image icon from showing.
       const avatar = profile.avatar_url
-        ? `<img class="avatar" src="${escapeHtml(profile.avatar_url)}" alt="${escapeHtml(displayName)}" />`
-        : `<div class="avatar-fallback">${escapeHtml(displayName.charAt(0).toUpperCase())}</div>`;
+        ? `<img class="avatar" id="avatar-img" src="${escapeHtml(profile.avatar_url)}" alt="${escapeHtml(displayName)}" />`
+        : `<div class="avatar-fallback">${escapeHtml(initial)}</div>`;
 
       card.innerHTML = `
         <img class="wordmark" src="images/wordmark.png" alt="RideLink" />
@@ -172,6 +179,16 @@
           <a class="store-btn android" href="${PLAY_STORE_URL}">Get it on Google Play</a>
         </div>
       `;
+
+      const avatarImg = document.getElementById('avatar-img');
+      if (avatarImg) {
+        avatarImg.addEventListener('error', () => {
+          const fallback = document.createElement('div');
+          fallback.className = 'avatar-fallback';
+          fallback.textContent = initial;
+          avatarImg.replaceWith(fallback);
+        });
+      }
     }
 
     async function load() {
