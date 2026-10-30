@@ -203,6 +203,21 @@
           return parts.join(' · ');
         },
       },
+      route: {
+        rpc: 'get_public_route_preview',
+        idParam: 'target_route_id',
+        unavailable: "This route isn't available.",
+        note: (f) => `Get RideLink to view ${escapeHtml(f.name)}'s full route and ride it.`,
+        cover: () => null,
+        title: (f) => f.name,
+        subtitle: (f) => [f.start_name, f.end_name].filter(Boolean).join(' → '),
+        byline: (f) => {
+          const parts = [];
+          if (typeof f.distance_miles === 'number') parts.push(`${f.distance_miles.toFixed(1)} mi`);
+          if (f.creator_display_name) parts.push(`By ${f.creator_display_name}`);
+          return parts.join(' · ');
+        },
+      },
     };
 
     function escapeHtml(value) {
