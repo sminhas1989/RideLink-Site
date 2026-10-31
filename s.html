@@ -157,6 +157,29 @@
     const APP_STORE_URL = 'https://apps.apple.com/app/id6825378676';
     const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.sminhas89.RideLink';
 
+    // The ride-link.app Worker (cloudflare-worker/og-preview-worker.js)
+    // already resolves the real image for this exact link server-side —
+    // a signed cover-photo URL for event/crew/group_ride, or a two-pin
+    // static map for route — and rewrites the og:image tag above with
+    // it before this HTML ever reaches the browser. Reading that same
+    // tag here, instead of re-deriving an image URL from the RPC
+    // response below, is what lets the visible page show a real image:
+    // cover_photo_url/photo_url from the RPC are private Storage paths
+    // that only a privileged (service-role) caller can turn into a
+    // loadable URL, which this client-side anon-key code was never able
+    // to do on its own, and route previews never had a cover-image
+    // concept here at all. Falls back to null (the existing emoji
+    // fallback below) whenever the Worker didn't run (e.g. the raw
+    // GitHub Pages URL, bypassing ride-link.app) or had nothing real to
+    // show — the tag then still holds the generic fallback image, which
+    // isn't a per-item photo worth displaying as this card's own cover.
+    const FALLBACK_IMAGE_URL = 'https://ride-link.app/images/og-image.png';
+    function resolvedCoverImageUrl() {
+      const metaImage = document.querySelector('meta[property="og:image"]');
+      const content = metaImage ? metaImage.getAttribute('content') : null;
+      return content && content !== FALLBACK_IMAGE_URL ? content : null;
+    }
+
     // One entry per shareable type — maps the `t` query param to its
     // RPC, the RPC's id parameter name, and how to turn one result row
     // into the card's fields. Keeps this single page from needing three
@@ -168,7 +191,6 @@
         idParam: 'target_event_id',
         unavailable: "This event isn't available.",
         note: (f) => `Get RideLink to view ${escapeHtml(f.title)}'s full details and RSVP.`,
-        cover: (f) => f.cover_photo_url,
         title: (f) => f.title,
         subtitle: (f) => [f.location_name, formatDate(f.scheduled_start)].filter(Boolean).join(' · '),
         byline: (f) => (f.organizer_display_name ? `Hosted by ${f.organizer_display_name}` : ''),
@@ -178,7 +200,6 @@
         idParam: 'target_group_ride_id',
         unavailable: "This group ride isn't available.",
         note: (f) => `Get RideLink to view ${escapeHtml(f.title)}'s full details and join.`,
-        cover: (f) => f.cover_photo_url,
         title: (f) => f.title,
         subtitle: (f) => [f.meeting_location_name, formatDate(f.scheduled_start)].filter(Boolean).join(' · '),
         byline: (f) => {
@@ -193,7 +214,6 @@
         idParam: 'target_crew_id',
         unavailable: "This crew isn't available.",
         note: (f) => `Get RideLink to view ${escapeHtml(f.name)}'s full profile and join.`,
-        cover: (f) => f.photo_url,
         title: (f) => f.name,
         subtitle: (f) => f.description || '',
         byline: (f) => {
@@ -208,7 +228,6 @@
         idParam: 'target_route_id',
         unavailable: "This route isn't available.",
         note: (f) => `Get RideLink to view ${escapeHtml(f.name)}'s full route and ride it.`,
-        cover: () => null,
         title: (f) => f.name,
         subtitle: (f) => [f.start_name, f.end_name].filter(Boolean).join(' → '),
         byline: (f) => {
@@ -239,13 +258,8 @@
 
     function renderPreview(config, fields) {
       const card = document.getElementById('card');
-      const coverUrl = config.cover(fields);
+      const coverUrl = resolvedCoverImageUrl();
       const title = config.title(fields) || 'RideLink';
-      // cover_photo_url is a private Storage path (signed-URL-only in
-      // the app) — it never resolves to a loadable image for an
-      // anonymous visitor here. Rendered anyway in case this ever
-      // changes to a real public URL; onerror below is what actually
-      // keeps today's broken-image icon from showing.
       const cover = coverUrl
         ? `<img class="cover" id="cover-img" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(title)}" />`
         : `<div class="cover-fallback">🏍️</div>`;
@@ -319,3 +333,4 @@
   </script>
 </body>
 </html>
+
