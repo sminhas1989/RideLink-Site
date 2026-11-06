@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>RideLink HQ</title>
+<style>
+  :root {
+    --ink-900: #0a0a0a;
+    --ink-800: #151515;
+    --ink-700: #202020;
+    --ink-600: #2a2a2a;
+    --text: #f5f6f8;
+    --text-secondary: #8a8f99;
+    --lime: #8cff00;
+    --blue: #2f8fff;
+    --danger: #ff4d4d;
+    --warning: #ffb020;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 0%, var(--ink-800) 0%, var(--ink-900) 60%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* ---------- Login gate ---------- */
+  .login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    background: linear-gradient(160deg, var(--ink-700) 0%, var(--ink-800) 100%);
+    border: 1px solid var(--ink-600);
+    border-radius: 24px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.6);
+  }
+
+  .login-banner { width: 100%; max-width: 200px; height: auto; display: block; }
+
+  .login-title {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .login-field {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .login-field label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .login-field input {
+    width: 100%;
+    background: var(--ink-900);
+    border: 1px solid var(--ink-600);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .login-field input:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+
+  .login-button {
+    width: 100%;
+    background: var(--lime);
+    color: var(--ink-900);
+    border: none;
+    border-radius: 999px;
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+  }
+
+  .login-button:disabled { opacity: 0.5; cursor: default; }
+
+  .login-error {
+    color: var(--danger);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* ---------- Dashboard shell ---------- */
+  .hq {
+    display: none;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+  }
+
+  .hq.visible { display: block; }
+
+  .hq-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .hq-brand { display: flex; align-items: center; gap: 14px; }
+  .hq-banner { height: 34px; width: auto; display: block; }
+  .hq-tag {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid var(--ink-600);
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+
+  .hq-header-right { display: flex; align-items: center; gap: 14px; }
+
+  .hq-status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+  .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 8px var(--lime); }
+  .hq-status.error .pulse { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  .signout-button {
+    background: transparent;
+    border: 1px solid var(--ink-600);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .signout-button:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* snapshot row */
+  .snapshot-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 900px) { .snapshot-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 560px) { .snapshot-row { grid-template-columns: repeat(2, 1fr); } }
+
+  .snapshot-card {
+    background: var(--ink-800);
+    border: 1px solid var(--ink-700);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .snapshot-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--lime);
+    font-variant-numeric: tabular-nums;
+  }
+  .snapshot-label {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* panels */
+  .panel-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 860px) { .panel-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--ink-800);
+    border: 1px solid var(--ink-700);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .panel-title h2 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .panel-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .empty-row {
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 18px 0;
+    text-align: center;
+  }
+
+  /* live rides list */
+  .ride-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ink-700);
+  }
+  .ride-row:last-child { border-bottom: none; }
+
+  .ride-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--ink-700);
+    flex-shrink: 0;
+  }
+  .ride-avatar-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--ink-700);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .ride-main { flex: 1; min-width: 0; }
+  .ride-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .ride-meta { font-size: 12px; color: var(--text-secondary); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .ride-stats { text-align: right; flex-shrink: 0; }
+  .ride-distance { font-size: 14px; font-weight: 700; color: var(--blue); font-variant-numeric: tabular-nums; }
+  .ride-duration { font-size: 11px; color: var(--text-secondary); }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .pill-friends { background: rgba(47, 143, 255, 0.15); color: var(--blue); }
+  .pill-only_me { background: var(--ink-700); color: var(--text-secondary); }
+
+  /* growth chart */
+  .chart-wrap { width: 100%; }
+  canvas#growthChart { width: 100%; height: 160px; display: block; }
+  .chart-caption {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+  }
+
+  /* db health */
+  canvas#dbHealthChart { width: 100%; height: 120px; display: block; }
+  .db-health-stats {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+  }
+  .db-health-stat { flex: 1; }
+  .db-health-stat-value {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--lime);
+    font-variant-numeric: tabular-nums;
+  }
+  .db-health-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+</style>
+</head>
+<body>
+
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <img class="login-banner" src="images/wordmark.png" alt="RideLink" />
+      <div class="login-title">RideLink HQ — Owner Sign In</div>
+      <form id="loginForm" style="width:100%; display:flex; flex-direction:column; gap:14px;">
+        <div class="login-field">
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="username" required />
+        </div>
+        <div class="login-field">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" required />
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button type="submit" class="login-button" id="loginButton">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="hq" id="hqRoot">
+    <div class="hq-header">
+      <div class="hq-brand">
+        <img class="hq-banner" src="images/wordmark.png" alt="RideLink" />
+        <span class="hq-tag">HQ</span>
+      </div>
+      <div class="hq-header-right">
+        <div class="hq-status" id="hqStatus"><span class="pulse"></span><span id="hqStatusText">Connecting…</span></div>
+        <button class="signout-button" id="signOutButton">Sign Out</button>
+      </div>
+    </div>
+
+    <div class="snapshot-row">
+      <div class="snapshot-card">
+        <div class="snapshot-value" id="snapTotal">—</div>
+        <div class="snapshot-label">Total Riders</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snapshot-value" id="snapToday">—</div>
+        <div class="snapshot-label">Signups Today</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snapshot-value" id="snapWeek">—</div>
+        <div class="snapshot-label">Signups 7d</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snapshot-value" id="snapDau">—</div>
+        <div class="snapshot-label">Daily Active</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snapshot-value" id="snapWaitlist">—</div>
+        <div class="snapshot-label">Waitlist</div>
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-title">
+            <h2>Live Rides</h2>
+            <span class="panel-count" id="liveRidesCount"></span>
+          </div>
+          <div id="liveRidesList"><div class="empty-row">Loading…</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">
+            <h2>Growth — Signups / Day</h2>
+            <span class="panel-count">Last 30 days</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="growthChart" width="600" height="160"></canvas>
+            <div class="chart-caption">Real signups per day from account creation — historical DAU isn't tracked yet (only today's value), so it isn't charted here.</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-title">
+            <h2>DB Health</h2>
+            <span class="panel-count">Last 24h</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="dbHealthChart" width="600" height="120"></canvas>
+            <div class="chart-caption">Active connections, sampled every 15 minutes.</div>
+          </div>
+          <div class="db-health-stats">
+            <div class="db-health-stat">
+              <div class="db-health-stat-value" id="dbHealthConnections">—</div>
+              <div class="db-health-stat-label">Connections now</div>
+            </div>
+            <div class="db-health-stat">
+              <div class="db-health-stat-value" id="dbHealthSize">—</div>
+              <div class="db-health-stat-label">Database size</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    // Same public anon/publishable key already shipped inside the
+    // RideLink mobile app and signups.html — safe to embed, since
+    // every HQ-only RPC below is gated server-side on is_app_owner(),
+    // not on possession of this key. Anyone who signs in without the
+    // owner's own account simply gets empty results back from each one.
+    const SUPABASE_URL = 'https://pzlchlsioqetkaebynoo.supabase.co';
+    const ANON_KEY = 'sb_publishable_jM9S9mIfIkSYYx5sJSXNDQ_-4TX8Hgh';
+    const POLL_MS = 15000;
+
+    const supabase = createClient(SUPABASE_URL, ANON_KEY);
+
+    const loginScreen = document.getElementById('loginScreen');
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+    const loginButton = document.getElementById('loginButton');
+    const hqRoot = document.getElementById('hqRoot');
+    const hqStatus = document.getElementById('hqStatus');
+    const hqStatusText = document.getElementById('hqStatusText');
+    const signOutButton = document.getElementById('signOutButton');
+
+    let pollHandle = null;
+
+    function showLogin(message) {
+      if (pollHandle) { clearInterval(pollHandle); pollHandle = null; }
+      hqRoot.classList.remove('visible');
+      loginScreen.style.display = 'flex';
+      loginError.textContent = message || '';
+    }
+
+    async function showDashboard() {
+      loginScreen.style.display = 'none';
+      hqRoot.classList.add('visible');
+      await refreshAll();
+      if (pollHandle) clearInterval(pollHandle);
+      pollHandle = setInterval(refreshAll, POLL_MS);
+    }
+
+    loginForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      loginError.textContent = '';
+      loginButton.disabled = true;
+      loginButton.textContent = 'Signing in…';
+      try {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await checkOwnerAndRoute();
+      } catch (error) {
+        loginError.textContent = error.message || 'Sign in failed.';
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'Sign In';
+      }
+    });
+
+    signOutButton.addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      showLogin('');
+    });
+
+    async function checkOwnerAndRoute() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showLogin('');
+        return;
+      }
+      const { data: isOwner, error } = await supabase.rpc('is_app_owner');
+      if (error || !isOwner) {
+        await supabase.auth.signOut();
+        showLogin('This account is not authorized for RideLink HQ.');
+        return;
+      }
+      await showDashboard();
+    }
+
+    // ---------- Rendering ----------
+
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value ?? '';
+      return div.innerHTML;
+    }
+
+    function initials(name) {
+      if (!name) return '?';
+      return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+    }
+
+    function formatDuration(startedAt) {
+      const ms = Date.now() - new Date(startedAt).getTime();
+      const minutes = Math.max(0, Math.round(ms / 60000));
+      if (minutes < 60) return `${minutes}m`;
+      return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+    }
+
+    function formatRelative(dateStr) {
+      const ms = Date.now() - new Date(dateStr).getTime();
+      const minutes = Math.round(ms / 60000);
+      if (minutes < 1) return 'just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.round(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      return `${Math.round(hours / 24)}d ago`;
+    }
+
+    function renderLiveRides(rides) {
+      const listEl = document.getElementById('liveRidesList');
+      const countEl = document.getElementById('liveRidesCount');
+      countEl.textContent = rides.length ? `${rides.length} active` : '';
+      if (!rides.length) {
+        listEl.innerHTML = '<div class="empty-row">No one riding right now.</div>';
+        return;
+      }
+      listEl.innerHTML = rides.map((ride) => {
+        // avatar_url is a rider-avatars Storage object path, not a
+        // renderable URL (that bucket is private — see
+        // 20260717120100_rider_avatars_storage.sql) — resolving a real
+        // signed URL per row is a deliberate v1 scope cut, not an
+        // oversight. Initials fallback always, same as ProfileAvatar's
+        // own fallback treatment for an unresolved avatar in the app.
+        const avatar = `<div class="ride-avatar-fallback">${escapeHtml(initials(ride.display_name))}</div>`;
+        const visPill = ride.visibility === 'only_me'
+          ? '<span class="pill pill-only_me">Only Me</span>'
+          : '<span class="pill pill-friends">Friends</span>';
+        const dest = ride.destination_name ? ` → ${escapeHtml(ride.destination_name)}` : '';
+        return `
+          <div class="ride-row">
+            ${avatar}
+            <div class="ride-main">
+              <div class="ride-name">${escapeHtml(ride.display_name || 'Rider')} ${visPill}</div>
+              <div class="ride-meta">${formatDuration(ride.started_at)} riding${dest}</div>
+            </div>
+            <div class="ride-stats">
+              <div class="ride-distance">${ride.distance_miles != null ? Number(ride.distance_miles).toFixed(1) + ' mi' : '—'}</div>
+              <div class="ride-duration">${ride.top_speed_mph != null ? Math.round(ride.top_speed_mph) + ' mph top' : ''}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    let lastGrowthSeries = [];
+
+    function renderGrowthChart(series) {
+      lastGrowthSeries = series;
+      const canvas = document.getElementById('growthChart');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.clientWidth || 600;
+      const height = 160;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ctx.clearRect(0, 0, width, height);
+
+      if (!series.length) return;
+
+      const max = Math.max(1, ...series.map((d) => d.signups));
+      const padding = 8;
+      const barGap = 3;
+      const barWidth = (width - padding * 2) / series.length - barGap;
+
+      series.forEach((d, i) => {
+        const barHeight = Math.max(2, (d.signups / max) * (height - 24));
+        const x = padding + i * (barWidth + barGap);
+        const y = height - barHeight - 16;
+        ctx.fillStyle = d.signups > 0 ? '#8cff00' : '#2a2a2a';
+        ctx.fillRect(x, y, barWidth, barHeight);
+      });
+
+      // Baseline
+      ctx.strokeStyle = '#2a2a2a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, height - 16.5);
+      ctx.lineTo(width, height - 16.5);
+      ctx.stroke();
+    }
+
+    function formatBytes(bytes) {
+      if (bytes == null) return '—';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let value = bytes;
+      let unitIndex = 0;
+      while (value >= 1024 && unitIndex < units.length - 1) {
+        value /= 1024;
+        unitIndex += 1;
+      }
+      return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    let lastDbHealthSeries = [];
+
+    function renderDbHealth(rows) {
+      lastDbHealthSeries = rows;
+
+      const latest = rows[rows.length - 1];
+      document.getElementById('dbHealthConnections').textContent = latest ? latest.active_connections : '—';
+      document.getElementById('dbHealthSize').textContent = latest ? formatBytes(latest.database_size_bytes) : '—';
+
+      const canvas = document.getElementById('dbHealthChart');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.clientWidth || 600;
+      const height = 120;
+      canvas.width = width * window.devicePixelRatio;
+      canvas.height = height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ctx.clearRect(0, 0, width, height);
+
+      if (rows.length < 2) return;
+
+      const padding = 8;
+      const bottomGutter = 16;
+      const plotHeight = height - bottomGutter - padding;
+      const max = Math.max(1, ...rows.map((d) => d.active_connections));
+      const stepX = (width - padding * 2) / (rows.length - 1);
+
+      ctx.strokeStyle = '#2f8fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      rows.forEach((d, i) => {
+        const x = padding + i * stepX;
+        const y = padding + plotHeight - (d.active_connections / max) * plotHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Baseline
+      ctx.strokeStyle = '#2a2a2a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, height - bottomGutter + 0.5);
+      ctx.lineTo(width, height - bottomGutter + 0.5);
+      ctx.stroke();
+    }
+
+    async function refreshAll() {
+      try {
+        const calls = {
+          stats: supabase.rpc('get_signup_stats'),
+          rides: supabase.rpc('get_hq_live_rides'),
+          growth: supabase.rpc('get_hq_growth_series', { days_count: 30 }),
+          dbHealth: supabase.rpc('get_hq_db_health', { hours_count: 24 }),
+        };
+        const entries = Object.entries(calls);
+        const results = await Promise.all(entries.map(([, p]) => p));
+        const [statsRes, ridesRes, growthRes, dbHealthRes] = results;
+
+        for (let i = 0; i < entries.length; i++) {
+          if (results[i].error) {
+            const err = results[i].error;
+            err.message = `[${entries[i][0]}] ${err.message}`;
+            throw err;
+          }
+        }
+
+        const stats = statsRes.data?.[0];
+        if (stats) {
+          document.getElementById('snapTotal').textContent = stats.total_signups.toLocaleString();
+          document.getElementById('snapToday').textContent = stats.signups_today.toLocaleString();
+          document.getElementById('snapWeek').textContent = stats.signups_this_week.toLocaleString();
+          document.getElementById('snapDau').textContent = stats.daily_active_users.toLocaleString();
+          document.getElementById('snapWaitlist').textContent = stats.waitlist_total.toLocaleString();
+        }
+
+        renderLiveRides(ridesRes.data || []);
+        renderGrowthChart(growthRes.data || []);
+        renderDbHealth(dbHealthRes.data || []);
+
+        hqStatus.classList.remove('error');
+        hqStatusText.textContent = `Live · updated ${new Date().toLocaleTimeString()}`;
+      } catch (error) {
+        hqStatus.classList.add('error');
+        hqStatusText.textContent = `Error: ${error.message || 'unknown'}`;
+        console.error('[hq] refresh failed:', error);
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      if (lastGrowthSeries.length) renderGrowthChart(lastGrowthSeries);
+      if (lastDbHealthSeries.length) renderDbHealth(lastDbHealthSeries);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) showLogin('');
+    });
+
+    checkOwnerAndRoute();
+  </script>
+</body>
+</html>
