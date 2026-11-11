@@ -4,7 +4,7 @@
     "details": [
       {
         "appID": "6XL9P2K6DK.com.sminhas89.RideLink",
-        "paths": ["/r.html", "/r.html?*", "/s.html", "/s.html?*"]
+        "paths": ["/r.html", "/r.html?*", "/s.html", "/s.html?*", "/start-ride", "/start-ride?*"]
       }
     ]
   }
