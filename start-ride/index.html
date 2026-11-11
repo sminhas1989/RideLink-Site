@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-itunes-app" content="app-id=6825378676">
+<title>Starting your ride&hellip;</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; background:#000; color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  .wrap { min-height:100%; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; padding:40px 32px; text-align:center; }
+  .dot { width:16px; height:16px; border-radius:50%; background:#b9f73e;
+    box-shadow:0 0 28px #b9f73e; animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1.25)} }
+  h1 { font-size:27px; font-weight:800; margin-top:30px; letter-spacing:.3px; }
+  p { color:#9a9a9a; font-size:16px; margin-top:12px; max-width:320px; line-height:1.45; }
+  a.btn { margin-top:40px; display:inline-block; background:#b9f73e; color:#000;
+    font-weight:800; font-size:18px; text-decoration:none; padding:17px 46px; border-radius:999px; }
+  a.btn:active { opacity:.8; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="dot"></div>
+    <h1>Starting your ride&hellip;</h1>
+    <p>RideLink is opening. If it doesn&rsquo;t open on its own, tap below.</p>
+    <a class="btn" href="ridelink://start-ride">Open RideLink</a>
+  </div>
+  <script>
+    // Bounce straight into the app via its custom scheme. Unlike an iOS App
+    // Intent (which is prohibited from launching the app via ridelink://),
+    // Safari CAN open a custom scheme, so this works even before Apple's CDN
+    // has refreshed the associated-domains AASA for /start-ride. Once that
+    // AASA is verified, iOS opens the app directly and this page never loads.
+    try { window.location.replace('ridelink://start-ride'); } catch (e) {}
+  </script>
+</body>
+</html>
