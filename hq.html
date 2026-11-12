@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
 <title>RideLink HQ</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --ink-900: #0a0a0a;
@@ -323,6 +325,45 @@
     margin-top: 2px;
   }
 
+  /* world map */
+  #worldMap {
+    width: 100%;
+    height: 440px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--ink-900);
+  }
+  .leaflet-container { background: #0a0a0a; font-family: inherit; }
+  .geo-dot {
+    border-radius: 50%;
+    background: rgba(140, 255, 0, 0.22);
+    border: 2px solid var(--lime);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #eaffd0;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 0 12px rgba(140, 255, 0, 0.45);
+  }
+  .geo-dot.active {
+    border-color: #ffffff;
+    animation: geopulse 1.4s ease-in-out infinite;
+  }
+  @keyframes geopulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(140, 255, 0, 0.5); }
+    50% { box-shadow: 0 0 24px rgba(140, 255, 0, 0.95); }
+  }
+  .leaflet-tooltip {
+    background: var(--ink-800);
+    border: 1px solid var(--ink-600);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: none;
+  }
+  .leaflet-tooltip::before { display: none; }
+
 </style>
 </head>
 <body>
@@ -379,6 +420,14 @@
         <div class="snapshot-value" id="snapWaitlist">—</div>
         <div class="snapshot-label">Waitlist</div>
       </div>
+    </div>
+
+    <div class="panel" style="margin-bottom: 18px;">
+      <div class="panel-title">
+        <h2>World — Where Riders Are</h2>
+        <span class="panel-count" id="worldCount"></span>
+      </div>
+      <div id="worldMap"></div>
     </div>
 
     <div class="panel-grid">
@@ -667,6 +716,104 @@
       ctx.stroke();
     }
 
+    // ---------- World map ----------
+    // Cities come from get_hq_user_geo() as plain strings ("Houston, TX",
+    // "Karachi, Pakistan"); geocode each to a lat/lng via OpenStreetMap's
+    // free Nominatim (no API key) and cache forever in localStorage, so
+    // steady-state refreshes make zero geocoding calls. City-level only —
+    // the RPC never returns a precise or live coordinate.
+    const geoCache = JSON.parse(localStorage.getItem('hq_geocache_v1') || '{}');
+    let worldMap = null;
+    let geoLayer = null;
+    let worldFitted = false;
+
+    function ensureWorldMap() {
+      if (worldMap || typeof L === 'undefined') return;
+      worldMap = L.map('worldMap', {
+        worldCopyJump: true,
+        attributionControl: false,
+        zoomControl: true,
+        minZoom: 1,
+      }).setView([25, 5], 2);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(worldMap);
+      geoLayer = L.layerGroup().addTo(worldMap);
+      setTimeout(() => worldMap && worldMap.invalidateSize(), 60);
+    }
+
+    async function geocodeCity(city) {
+      if (geoCache[city]) return geoCache[city];
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(city)}`,
+          { headers: { Accept: 'application/json' } },
+        );
+        const json = await res.json();
+        if (Array.isArray(json) && json[0]) {
+          const coord = [parseFloat(json[0].lat), parseFloat(json[0].lon)];
+          geoCache[city] = coord;
+          localStorage.setItem('hq_geocache_v1', JSON.stringify(geoCache));
+          return coord;
+        }
+      } catch (e) {
+        /* ignore — this city just won't plot this round */
+      }
+      return null;
+    }
+
+    function dotIcon(count, active) {
+      const size = Math.max(18, Math.min(46, 14 + count * 3));
+      return L.divIcon({
+        className: '',
+        html: `<div class="geo-dot${active ? ' active' : ''}" style="width:${size}px;height:${size}px;">${count}</div>`,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+    }
+
+    async function renderWorldMap(rows) {
+      ensureWorldMap();
+      if (!worldMap) return;
+
+      const countEl = document.getElementById('worldCount');
+      const totalRiders = rows.reduce((sum, r) => sum + r.rider_count, 0);
+      const ridingNow = rows.reduce((sum, r) => sum + r.active_now, 0);
+      countEl.textContent =
+        `${rows.length} cities · ${totalRiders} riders${ridingNow ? ` · ${ridingNow} riding now` : ''}`;
+
+      // Geocode only cities we've never seen, one at a time (Nominatim asks
+      // for ≤1 req/sec). Cached forever, so this loop is a no-op after the
+      // first load unless a brand-new city signs up.
+      for (const r of rows) {
+        if (!geoCache[r.city]) {
+          await geocodeCity(r.city);
+          await new Promise((resolve) => setTimeout(resolve, 1100));
+        }
+      }
+
+      geoLayer.clearLayers();
+      const pts = [];
+      rows.forEach((r) => {
+        const coord = geoCache[r.city];
+        if (!coord) return;
+        pts.push(coord);
+        const marker = L.marker(coord, { icon: dotIcon(r.rider_count, r.active_now > 0) });
+        const activeStr = r.active_now > 0 ? ` · ${r.active_now} riding now` : '';
+        marker.bindTooltip(
+          `${r.city} — ${r.rider_count} rider${r.rider_count === 1 ? '' : 's'}${activeStr}`,
+          { direction: 'top' },
+        );
+        geoLayer.addLayer(marker);
+      });
+
+      if (!worldFitted && pts.length) {
+        worldFitted = true;
+        worldMap.fitBounds(pts, { padding: [40, 40], maxZoom: 5 });
+      }
+    }
+
     async function refreshAll() {
       try {
         const calls = {
@@ -674,10 +821,11 @@
           rides: supabase.rpc('get_hq_live_rides'),
           growth: supabase.rpc('get_hq_growth_series', { days_count: 30 }),
           dbHealth: supabase.rpc('get_hq_db_health', { hours_count: 24 }),
+          geo: supabase.rpc('get_hq_user_geo'),
         };
         const entries = Object.entries(calls);
         const results = await Promise.all(entries.map(([, p]) => p));
-        const [statsRes, ridesRes, growthRes, dbHealthRes] = results;
+        const [statsRes, ridesRes, growthRes, dbHealthRes, geoRes] = results;
 
         for (let i = 0; i < entries.length; i++) {
           if (results[i].error) {
@@ -699,6 +847,7 @@
         renderLiveRides(ridesRes.data || []);
         renderGrowthChart(growthRes.data || []);
         renderDbHealth(dbHealthRes.data || []);
+        renderWorldMap(geoRes.data || []);
 
         hqStatus.classList.remove('error');
         hqStatusText.textContent = `Live · updated ${new Date().toLocaleTimeString()}`;
@@ -712,6 +861,7 @@
     window.addEventListener('resize', () => {
       if (lastGrowthSeries.length) renderGrowthChart(lastGrowthSeries);
       if (lastDbHealthSeries.length) renderDbHealth(lastDbHealthSeries);
+      if (worldMap) worldMap.invalidateSize();
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
