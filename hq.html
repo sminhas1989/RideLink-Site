@@ -325,44 +325,101 @@
     margin-top: 2px;
   }
 
-  /* world map */
-  #worldMap {
-    width: 100%;
-    height: 440px;
+  /* ---------- world map : mission-control / surveillance style ---------- */
+  .map-shell {
+    position: relative;
     border-radius: 16px;
     overflow: hidden;
-    background: var(--ink-900);
+    border: 1px solid rgba(140, 255, 0, 0.25);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 24px 60px -24px rgba(0, 0, 0, 0.8),
+      inset 0 0 90px rgba(0, 0, 0, 0.7);
   }
-  .leaflet-container { background: #0a0a0a; font-family: inherit; }
+  #worldMap {
+    width: 100%;
+    height: 480px;
+    background: #050705;
+    filter: saturate(0.8) contrast(1.05);
+  }
+  .leaflet-container { background: #050705; font-family: inherit; }
+  /* tint the basemap toward a green ops screen */
+  .leaflet-tile { filter: grayscale(1) brightness(0.55) sepia(0.6) hue-rotate(55deg) saturate(1.6); }
+
+  /* overlays — all pointer-events:none so the map stays draggable */
+  .map-shell > .map-fx { position: absolute; inset: 0; pointer-events: none; z-index: 450; }
+  .map-grid {
+    background-image:
+      linear-gradient(rgba(140, 255, 0, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(140, 255, 0, 0.06) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mix-blend-mode: screen;
+  }
+  .map-vignette {
+    background: radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, 0.55) 100%);
+  }
+  .map-scan {
+    background: linear-gradient(to bottom, transparent, rgba(140, 255, 0, 0.75), transparent);
+    height: 90px; top: -90px; bottom: auto;
+    mix-blend-mode: screen;
+    opacity: 0.6;
+    animation: scansweep 5.5s linear infinite;
+  }
+  @keyframes scansweep { 0% { transform: translateY(0); } 100% { transform: translateY(600px); } }
+  .map-scanlines {
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.18) 2px 3px);
+    opacity: 0.5;
+  }
+  /* corner targeting brackets */
+  .map-corner { position: absolute; width: 22px; height: 22px; border: 2px solid rgba(140,255,0,0.7); z-index: 460; pointer-events: none; }
+  .map-corner.tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+  .map-corner.tr { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+  .map-corner.bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+  .map-corner.br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+
+  /* HUD readout */
+  .map-hud {
+    position: absolute; top: 14px; left: 18px; z-index: 470; pointer-events: none;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--lime); text-shadow: 0 0 8px rgba(140, 255, 0, 0.6); line-height: 1.7;
+  }
+  .map-hud .rec { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff3b3b;
+    box-shadow: 0 0 8px #ff3b3b; margin-right: 7px; animation: blink 1.1s steps(1) infinite; vertical-align: middle; }
+  .map-hud .dim { color: var(--text-secondary); text-shadow: none; }
+  @keyframes blink { 50% { opacity: 0.15; } }
+
+  /* targeting reticle markers */
   .geo-dot {
+    position: relative;
     border-radius: 50%;
-    background: rgba(140, 255, 0, 0.22);
-    border: 2px solid var(--lime);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #eaffd0;
-    font-size: 11px;
-    font-weight: 800;
-    box-shadow: 0 0 12px rgba(140, 255, 0, 0.45);
+    border: 1.5px solid var(--lime);
+    background: radial-gradient(circle, rgba(140,255,0,0.4) 0%, rgba(140,255,0,0.04) 72%);
+    display: flex; align-items: center; justify-content: center;
+    color: #eaffd0; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 800;
+    box-shadow: 0 0 10px rgba(140,255,0,0.55), inset 0 0 8px rgba(140,255,0,0.3);
   }
-  .geo-dot.active {
-    border-color: #ffffff;
-    animation: geopulse 1.4s ease-in-out infinite;
-  }
-  @keyframes geopulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(140, 255, 0, 0.5); }
-    50% { box-shadow: 0 0 24px rgba(140, 255, 0, 0.95); }
-  }
+  .geo-dot::before, .geo-dot::after { content: ""; position: absolute; background: var(--lime); opacity: 0.75; }
+  .geo-dot::before { width: 170%; height: 1px; left: -35%; }
+  .geo-dot::after { height: 170%; width: 1px; top: -35%; }
+  .geo-dot .ring { position: absolute; inset: -6px; border: 1px solid rgba(140,255,0,0.5); border-radius: 50%; }
+  .geo-dot.active { border-color: #ffffff; box-shadow: 0 0 16px rgba(140,255,0,0.95), inset 0 0 10px rgba(140,255,0,0.5); }
+  .geo-dot.active .ring { animation: ping 1.6s ease-out infinite; }
+  @keyframes ping { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(2.6); opacity: 0; } }
+
+  /* glowing arc links between hubs (Leaflet SVG paths) */
+  path.arc { stroke: var(--lime); stroke-width: 1.1; fill: none; opacity: 0.45;
+    filter: drop-shadow(0 0 3px rgba(140,255,0,0.85)); stroke-dasharray: 5 9; animation: arcflow 1.1s linear infinite; }
+  @keyframes arcflow { to { stroke-dashoffset: -14; } }
+
   .leaflet-tooltip {
-    background: var(--ink-800);
-    border: 1px solid var(--ink-600);
-    color: var(--text);
-    font-size: 12px;
-    font-weight: 600;
-    box-shadow: none;
+    background: rgba(8, 12, 8, 0.92);
+    border: 1px solid rgba(140, 255, 0, 0.5);
+    color: var(--lime);
+    font-family: ui-monospace, monospace;
+    font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 700;
+    box-shadow: 0 0 12px rgba(140, 255, 0, 0.25);
   }
   .leaflet-tooltip::before { display: none; }
+  .leaflet-control-zoom a { background: rgba(8,12,8,0.9); color: var(--lime); border-color: rgba(140,255,0,0.3); }
 
 </style>
 </head>
@@ -424,10 +481,25 @@
 
     <div class="panel" style="margin-bottom: 18px;">
       <div class="panel-title">
-        <h2>World — Where Riders Are</h2>
+        <h2>Global Ops — Rider Network</h2>
         <span class="panel-count" id="worldCount"></span>
       </div>
-      <div id="worldMap"></div>
+      <div class="map-shell">
+        <div id="worldMap"></div>
+        <div class="map-fx map-grid"></div>
+        <div class="map-fx map-scan"></div>
+        <div class="map-fx map-scanlines"></div>
+        <div class="map-fx map-vignette"></div>
+        <div class="map-corner tl"></div>
+        <div class="map-corner tr"></div>
+        <div class="map-corner bl"></div>
+        <div class="map-corner br"></div>
+        <div class="map-hud">
+          <div><span class="rec"></span>Surveillance // Active</div>
+          <div id="hudReadout"><span class="dim">Nodes</span> — &nbsp; <span class="dim">Live</span> —</div>
+          <div id="hudClock" class="dim">--:--:-- UTC</div>
+        </div>
+      </div>
     </div>
 
     <div class="panel-grid">
@@ -725,6 +797,7 @@
     const geoCache = JSON.parse(localStorage.getItem('hq_geocache_v1') || '{}');
     let worldMap = null;
     let geoLayer = null;
+    let arcLayer = null;
     let worldFitted = false;
 
     function ensureWorldMap() {
@@ -739,6 +812,7 @@
         subdomains: 'abcd',
         maxZoom: 19,
       }).addTo(worldMap);
+      arcLayer = L.layerGroup().addTo(worldMap);
       geoLayer = L.layerGroup().addTo(worldMap);
       setTimeout(() => worldMap && worldMap.invalidateSize(), 60);
     }
@@ -767,21 +841,47 @@
       const size = Math.max(18, Math.min(46, 14 + count * 3));
       return L.divIcon({
         className: '',
-        html: `<div class="geo-dot${active ? ' active' : ''}" style="width:${size}px;height:${size}px;">${count}</div>`,
+        html: `<div class="geo-dot${active ? ' active' : ''}" style="width:${size}px;height:${size}px;"><i class="ring"></i>${count}</div>`,
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
       });
+    }
+
+    // A curved, great-circle-ish arc between two [lat,lng] points: a
+    // quadratic bezier bulged perpendicular to the A→B line, for that
+    // "global comms map" look between the hub and every other node.
+    function arcPoints(a, b, bend = 0.22, steps = 48) {
+      const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const dLat = b[0] - a[0];
+      const dLng = b[1] - a[1];
+      const ctrl = [mid[0] - dLng * bend, mid[1] + dLat * bend];
+      const out = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const u = 1 - t;
+        out.push([
+          u * u * a[0] + 2 * u * t * ctrl[0] + t * t * b[0],
+          u * u * a[1] + 2 * u * t * ctrl[1] + t * t * b[1],
+        ]);
+      }
+      return out;
     }
 
     async function renderWorldMap(rows) {
       ensureWorldMap();
       if (!worldMap) return;
 
-      const countEl = document.getElementById('worldCount');
       const totalRiders = rows.reduce((sum, r) => sum + r.rider_count, 0);
       const ridingNow = rows.reduce((sum, r) => sum + r.active_now, 0);
-      countEl.textContent =
+      document.getElementById('worldCount').textContent =
         `${rows.length} cities · ${totalRiders} riders${ridingNow ? ` · ${ridingNow} riding now` : ''}`;
+      const hud = document.getElementById('hudReadout');
+      if (hud) {
+        hud.innerHTML =
+          `<span class="dim">Nodes</span> ${rows.length} &nbsp; ` +
+          `<span class="dim">Agents</span> ${totalRiders} &nbsp; ` +
+          `<span class="dim">Live</span> ${ridingNow}`;
+      }
 
       // Geocode only cities we've never seen, one at a time (Nominatim asks
       // for ≤1 req/sec). Cached forever, so this loop is a no-op after the
@@ -794,13 +894,30 @@
       }
 
       geoLayer.clearLayers();
-      const pts = [];
-      rows.forEach((r) => {
-        const coord = geoCache[r.city];
-        if (!coord) return;
-        pts.push(coord);
-        const marker = L.marker(coord, { icon: dotIcon(r.rider_count, r.active_now > 0) });
-        const activeStr = r.active_now > 0 ? ` · ${r.active_now} riding now` : '';
+      arcLayer.clearLayers();
+
+      const placed = rows
+        .map((r) => ({ ...r, coord: geoCache[r.city] }))
+        .filter((r) => r.coord);
+      const pts = placed.map((r) => r.coord);
+
+      // Network links: from the biggest hub out to every other node.
+      if (placed.length > 1) {
+        const hub = placed[0].coord;
+        placed.slice(1).forEach((r) => {
+          L.polyline(arcPoints(hub, r.coord), {
+            className: 'arc',
+            color: '#8cff00',
+            weight: 1.1,
+            opacity: 0.45,
+            interactive: false,
+          }).addTo(arcLayer);
+        });
+      }
+
+      placed.forEach((r) => {
+        const marker = L.marker(r.coord, { icon: dotIcon(r.rider_count, r.active_now > 0) });
+        const activeStr = r.active_now > 0 ? ` · ${r.active_now} live` : '';
         marker.bindTooltip(
           `${r.city} — ${r.rider_count} rider${r.rider_count === 1 ? '' : 's'}${activeStr}`,
           { direction: 'top' },
@@ -813,6 +930,12 @@
         worldMap.fitBounds(pts, { padding: [40, 40], maxZoom: 5 });
       }
     }
+
+    // Live UTC clock in the surveillance HUD.
+    setInterval(() => {
+      const el = document.getElementById('hudClock');
+      if (el) el.textContent = new Date().toISOString().slice(11, 19) + ' UTC';
+    }, 1000);
 
     async function refreshAll() {
       try {
