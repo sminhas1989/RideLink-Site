@@ -421,6 +421,25 @@
   .leaflet-tooltip::before { display: none; }
   .leaflet-control-zoom a { background: rgba(8,12,8,0.9); color: var(--lime); border-color: rgba(140,255,0,0.3); }
 
+  /* live-feed ticker */
+  .map-ticker {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 468;
+    height: 30px; overflow: hidden; pointer-events: none;
+    display: flex; align-items: center;
+    background: linear-gradient(to top, rgba(4, 8, 4, 0.95) 40%, rgba(4, 8, 4, 0));
+    border-top: 1px solid rgba(140, 255, 0, 0.25);
+  }
+  .map-ticker-track {
+    display: inline-flex; white-space: nowrap; will-change: transform;
+    animation: tickerflow 48s linear infinite;
+    font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--lime); text-shadow: 0 0 6px rgba(140, 255, 0, 0.4);
+  }
+  .map-ticker-item { padding: 0 26px; }
+  .map-ticker-item .tk-dim { color: var(--text-secondary); text-shadow: none; }
+  .map-ticker-item .tk-sep { color: rgba(140, 255, 0, 0.45); margin: 0 9px; }
+  @keyframes tickerflow { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
 </style>
 </head>
 <body>
@@ -499,6 +518,7 @@
           <div id="hudReadout"><span class="dim">Nodes</span> — &nbsp; <span class="dim">Live</span> —</div>
           <div id="hudClock" class="dim">--:--:-- UTC</div>
         </div>
+        <div class="map-ticker"><div class="map-ticker-track" id="tickerTrack"></div></div>
       </div>
     </div>
 
@@ -944,6 +964,33 @@
       if (el) el.textContent = new Date().toISOString().slice(11, 19) + ' UTC';
     }, 1000);
 
+    // Live-feed ticker: interleave currently-active rides and recent
+    // signups into a scrolling marquee. Track content is duplicated so the
+    // CSS translateX(-50%) loop is seamless.
+    function renderLiveFeed(signups, rides) {
+      const items = [];
+      (rides || []).forEach((r) => {
+        items.push(
+          `<span class="map-ticker-item">▸ <span class="tk-dim">On the move</span> ` +
+          `${escapeHtml(r.display_name || 'Rider')} <span class="tk-sep">·</span> ${formatDuration(r.started_at)} riding</span>`,
+        );
+      });
+      (signups || []).forEach((s) => {
+        const name = s.display_name || s.username || 'Rider';
+        const city = s.city ? ` <span class="tk-sep">·</span> ${escapeHtml(s.city)}` : '';
+        items.push(
+          `<span class="map-ticker-item">◈ <span class="tk-dim">New agent</span> ` +
+          `${escapeHtml(name)}${city} <span class="tk-sep">·</span> ${formatRelative(s.created_at)}</span>`,
+        );
+      });
+      if (!items.length) {
+        items.push('<span class="map-ticker-item"><span class="tk-dim">Awaiting activity…</span></span>');
+      }
+      const html = items.join('');
+      const track = document.getElementById('tickerTrack');
+      if (track) track.innerHTML = html + html;
+    }
+
     async function refreshAll() {
       try {
         const calls = {
@@ -952,10 +999,11 @@
           growth: supabase.rpc('get_hq_growth_series', { days_count: 30 }),
           dbHealth: supabase.rpc('get_hq_db_health', { hours_count: 24 }),
           geo: supabase.rpc('get_hq_user_geo'),
+          recent: supabase.rpc('get_hq_recent_signups', { result_limit: 15 }),
         };
         const entries = Object.entries(calls);
         const results = await Promise.all(entries.map(([, p]) => p));
-        const [statsRes, ridesRes, growthRes, dbHealthRes, geoRes] = results;
+        const [statsRes, ridesRes, growthRes, dbHealthRes, geoRes, recentRes] = results;
 
         for (let i = 0; i < entries.length; i++) {
           if (results[i].error) {
@@ -978,6 +1026,7 @@
         renderGrowthChart(growthRes.data || []);
         renderDbHealth(dbHealthRes.data || []);
         renderWorldMap(geoRes.data || []);
+        renderLiveFeed(recentRes.data || [], ridesRes.data || []);
 
         hqStatus.classList.remove('error');
         hqStatusText.textContent = `Live · updated ${new Date().toLocaleTimeString()}`;
