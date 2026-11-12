@@ -342,7 +342,7 @@
   }
   .leaflet-container { background: #050705; font-family: inherit; }
   /* tint the basemap toward a green ops screen */
-  .leaflet-tile { filter: grayscale(1) brightness(0.55) sepia(0.6) hue-rotate(55deg) saturate(1.6); }
+  .leaflet-tile { filter: brightness(0.92) sepia(0.5) hue-rotate(58deg) saturate(1.7); }
 
   /* overlays — all pointer-events:none so the map stays draggable */
   .map-shell > .map-fx { position: absolute; inset: 0; pointer-events: none; z-index: 450; }
@@ -808,10 +808,17 @@
         zoomControl: true,
         minZoom: 1,
       }).setView([25, 5], 2);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19,
-      }).addTo(worldMap);
+      // Esri's Dark Gray Canvas — a genuinely dark basemap that needs no
+      // API key (CARTO's free basemaps now require one). Base + label
+      // reference as two layers.
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 16 },
+      ).addTo(worldMap);
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 16 },
+      ).addTo(worldMap);
       arcLayer = L.layerGroup().addTo(worldMap);
       geoLayer = L.layerGroup().addTo(worldMap);
       setTimeout(() => worldMap && worldMap.invalidateSize(), 60);
